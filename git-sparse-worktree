@@ -1,0 +1,120 @@
+#!/usr/bin/env python3
+import argparse
+import subprocess
+import sys
+import shlex
+import os
+
+ZSH_COMPLETION = '''
+#compdef git-sparse-worktree
+
+_git_ls_tree() {
+  git ls-tree "$@" | while read mode type hash path; do
+    if [ "$type" = "tree" ]; then
+      echo "$path/"
+    else
+      echo "$path"
+    fi
+  done
+}
+
+_git_sparse_worktree() {
+  local curcontext="$curcontext" state line
+  typeset -A opt_args
+
+  _arguments -C \
+    '1: :->subcommand' \
+    '2: :->arg' && return 0
+
+  case $state in
+    subcommand)
+      _values 'subcommand' 'add'
+      ;;
+    arg)
+      local word="${words[-1]}"
+      local paths=(${(f)"$(_git_ls_tree HEAD "./$word/" "$(dirname "$word")/")"})
+      compadd -S '' -a paths
+      ;;
+  esac
+}
+
+compdef _git_sparse_worktree git-sparse-worktree
+'''
+
+def _completion(args):
+  print(ZSH_COMPLETION, file=sys.stdout)
+
+
+def _add(args):
+  print('add', file=sys.stderr)
+
+  # TODO: relative to git root
+  worktree = args.branch
+
+  command = [
+    'git',
+    'worktree',
+    'add',
+    '--no-checkout',
+    '-b',
+    args.branch,
+    worktree,
+  ]
+  print(shlex.join(command), file=sys.stderr)
+  subprocess.call(command)
+
+  command = [
+    'git',
+    '-C', worktree,
+    'sparse-checkout',
+    'init',
+  ]
+  if args.cone:
+    command.append('--cone')
+  print(shlex.join(command), file=sys.stderr)
+  subprocess.call(command)
+
+  command = [
+    'git',
+    '-C', worktree,
+    'sparse-checkout',
+    'add',
+    *args.paths,
+  ]
+  print(shlex.join(command), file=sys.stderr)
+  subprocess.call(command)
+
+  command = [
+    'git',
+    '-C', worktree,
+    'checkout',
+  ]
+  print(shlex.join(command), file=sys.stderr)
+  subprocess.call(command)
+
+
+def main():
+  parser = argparse.ArgumentParser()
+  parser.set_defaults(f=None)
+
+  subparsers = parser.add_subparsers()
+
+  add_parser = subparsers.add_parser('add')
+  add_parser.set_defaults(f=_add)
+  add_parser.add_argument('-b', '--branch', required=True)
+  add_parser.add_argument('--cone', action='store_true')
+  add_parser.add_argument('paths', nargs='+')
+
+  completion_parser = subparsers.add_parser('completion')
+  completion_parser.set_defaults(f=_completion)
+
+  args = parser.parse_args()
+
+  if args.f is None:
+    parser.print_help()
+    return
+
+  args.f(args)
+
+if __name__ == '__main__':
+  main()
