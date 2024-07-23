@@ -16,9 +16,13 @@ $ cd docs
 
 ## todo
 
+* support passing paths in from stdin
+  * e.g. `git ls-tree -r -d --name-only HEAD | fzf --multi | git-sparse-worktree add`
+* support repo-configured completions 
+  * e.g. "any directory containing a README.md"
 * make file completions work properly
 * bash + fish completion support
-* support **/foo?
 * support fuzzy-matching?
-* support repo-defined nodes? e.g. a list of directories or "**/devenv.nix"
-* support ephemeral worktrees? e.g. add --rm
+* support ephemeral worktrees?
+  * e.g. `git-sparse-worktree add --rm`
+
