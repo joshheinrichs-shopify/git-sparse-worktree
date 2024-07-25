@@ -7,18 +7,26 @@ a prototype that makes it convenient to create sparse worktrees. leverages `git 
 ## usage
 
 ```console
+$ # set up zsh completion
 $ eval "$(git-sparse-worktree completion)"
+
+$ # clone a repo without checking out its contents
 $ git clone --no-checkout https://github.com/torvalds/linux
 $ cd linux
-$ git-sparse-worktree add -b docs Documentation/
-$ cd docs
+
+$ # create a sparse worktree with just one folder
+$ git-sparse-worktree add -b foo Documentation/
+$ ls foo/
+
+$ # do the same thing via stdin
+$ git ls-tree -r -d --name-only HEAD | fzf --multi | git-sparse-worktree add -b bar
+$ ls bar/
 ```
 
 ## todo
 
-* support passing paths in from stdin
-  * e.g. `git ls-tree -r -d --name-only HEAD | fzf --multi | git-sparse-worktree add`
-* support repo-configured completions 
+* support extending the current worktree
+* support repo-configured completions
   * e.g. "any directory containing a README.md"
 * make file completions work properly
 * bash + fish completion support

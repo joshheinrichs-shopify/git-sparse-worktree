@@ -48,6 +48,9 @@ def _completion(args):
 def _add(args):
   print('add', file=sys.stderr)
 
+  if args.paths == ['-'] or not sys.stdin.isatty():
+    args.paths = sys.stdin.read().splitlines()
+
   # TODO: relative to git root
   worktree = args.branch
 
@@ -103,7 +106,7 @@ def main():
   add_parser.set_defaults(f=_add)
   add_parser.add_argument('-b', '--branch', required=True)
   add_parser.add_argument('--cone', action='store_true')
-  add_parser.add_argument('paths', nargs='+')
+  add_parser.add_argument('paths', nargs='*')
 
   completion_parser = subparsers.add_parser('completion')
   completion_parser.set_defaults(f=_completion)
